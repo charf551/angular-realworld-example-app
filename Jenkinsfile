@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        docker { image 'timbru31/node-alpine-git:14' }
-    }
+    agent any
     environment {
         GIT_LATEST_COMMIT_EDITOR= sh(
             returnStdout:true,
@@ -29,6 +27,9 @@ pipeline {
             }
         }
         stage ('Execute CI pipeline') {
+            agent {
+                docker { image 'node:12-buster-slim' }
+            }
             stages{
                 stage ('npm install'){
                     steps {
@@ -40,10 +41,12 @@ pipeline {
                         sh 'npm run-script build --prod'
                     }
                 }
-                stage('Create artifact after build') {
-                    sh "tar czvf dist.tar.gz dist"
-                    sh 'tar -czvf app.${BUILD_ID}.tar.gz dist'
-                    archiveArtifacts "**/*.tar.gz"
+                stage ('Artifacts') {
+                    steps {
+                        sh "tar czvf dist.tar.gz dist"
+                        sh 'tar -czvf app.${BUILD_ID}.tar.gz dist'
+                        archiveArtifacts "**/*.tar.gz"
+                    }
                 }
             }
         }
